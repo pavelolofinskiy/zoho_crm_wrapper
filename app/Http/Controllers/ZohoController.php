@@ -11,12 +11,6 @@ class ZohoController extends Controller
     {
         $accessToken = $this->refreshAccessToken(); 
         try {
-
-            if ($this->phoneValidator($request->input('accountPhone')) == false) {
-                throw new \Exception(json_encode('wrong phone number format'));
-            }
-
-
             // Создание аккаунта
             $accountResponse = Http::withHeaders([
                 'Authorization' => 'Zoho-oauthtoken ' . $accessToken
@@ -31,7 +25,7 @@ class ZohoController extends Controller
             ]);
 
             if ($accountResponse->failed()) {
-                throw new \Exception($accountResponse->body());
+                throw new \Exception($dealResponse->body());
             }
             
             $accountData = $accountResponse->json();
@@ -39,9 +33,7 @@ class ZohoController extends Controller
             if ($accountData['data'][0]['status'] == 'error') {
                 throw new \Exception(json_encode($accountData));
             }
-
             
-
             $accountId = $accountData['data'][0]['details']['Created_By']['id'];
 
             // Создание сделки
@@ -50,20 +42,26 @@ class ZohoController extends Controller
             ])->post('https://www.zohoapis.eu/crm/v2/Deals', [
                 'data' => [
                     [
-                        'Deal_Name' => $request->input('deal_name'),
-                        'Stage' => $request->input('deal_stage'),
-                        'Account_Name' => ['id' => $accountId]
+                        'Deal_Name' => $request->input('dealName'),
+                        'Stage' => $request->input('dealStage'),
+                        'id' => ['id' => $accountId]
                     ]
                 ]
             ]);
+
+            print_r($dealResponse->body()); die;
 
             if ($dealResponse->failed()) {
                 throw new \Exception($dealResponse->body());
             }
 
+            if ($this->phoneValidator($request->input('accountPhone')) == false) {
+                throw new \Exception(json_encode('Wrong phone number format'));
+            }
+
             return response()->json(['message' => 'Deal and Account created successfully']);
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            return response()->json(['error' => 'Error creating deal or account', 'details' => $e->getMessage()], 400);
         }
     }
 

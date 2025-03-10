@@ -66,8 +66,9 @@ export default {
         if (parsedData.data && parsedData.data[0].details.api_name === 'Website' && parsedData.data[0].details.expected_data_type === 'website') {
         this.errorMessage = 'Invalid website name provided';
         } else {
-          const details = responseData.details || 'No details provided';
-          this.errorMessage = `Failed to create deal and account: ${details}`;
+
+          const details = responseData.details.replace(/"/g, '');
+          this.errorMessage = `${details}`;
         }
       } else {
         console.log(responseData.message);
