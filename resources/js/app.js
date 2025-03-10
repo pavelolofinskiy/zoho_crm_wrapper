@@ -1,5 +1,4 @@
-import { createApp } from 'vue'; // Используем Vue 3
-import ExampleComponent from './components/ExampleComponent.vue'; // Импортируем компонент
+import { createApp } from 'vue';
+import App from './App.vue';
 
-const app = createApp(ExampleComponent); // Регистрируем компонент
-app.mount('#app'); // Монтируем компонент в элемент с id="app"
+const app = createApp(App).mount('#app');
