@@ -12,53 +12,52 @@ class ZohoController extends Controller
         $accessToken = $this->refreshAccessToken(); 
         try {
             // Создание аккаунта
-            $accountResponse = Http::withHeaders([
-                'Authorization' => 'Zoho-oauthtoken ' . $accessToken
-            ])->post('https://www.zohoapis.eu/crm/v2/Accounts', [
-                'data' => [
-                    [
-                        'Account_Name' => $request->input('accountName'),
-                        'Website' => $request->input('accountWebsite'),
-                        'Phone' => $request->input('accountPhone'),
-                    ]
-                ]
-            ]);
-
-            if ($accountResponse->failed()) {
-                throw new \Exception($dealResponse->body());
-            }
-            
-            $accountData = $accountResponse->json();
-
-            if ($accountData['data'][0]['status'] == 'error') {
-                throw new \Exception(json_encode($accountData));
-            }
-            
-            $accountId = $accountData['data'][0]['details']['Created_By']['id'];
-
-            // Создание сделки
-            $dealResponse = Http::withHeaders([
-                'Authorization' => 'Zoho-oauthtoken ' . $accessToken
-            ])->post('https://www.zohoapis.eu/crm/v2/Deals', [
-                'data' => [
-                    [
-                        'Deal_Name' => $request->input('dealName'),
-                        'Stage' => $request->input('dealStage'),
-                        'id' => ['id' => $accountId]
-                    ]
-                ]
-            ]);
-
-            print_r($dealResponse->body()); die;
-
-            if ($dealResponse->failed()) {
-                throw new \Exception($dealResponse->body());
-            }
-
             if ($this->phoneValidator($request->input('accountPhone')) == false) {
                 throw new \Exception(json_encode('Wrong phone number format'));
-            }
+            } else {
 
+                $accountResponse = Http::withHeaders([
+                    'Authorization' => 'Zoho-oauthtoken ' . $accessToken
+                ])->post('https://www.zohoapis.eu/crm/v2/Accounts', [
+                    'data' => [
+                        [
+                            'Account_Name' => $request->input('accountName'),
+                            'Website' => $request->input('accountWebsite'),
+                            'Phone' => $request->input('accountPhone'),
+                        ]
+                    ]
+                ]);
+    
+                if ($accountResponse->failed()) {
+                    throw new \Exception($dealResponse->body());
+                }
+                
+                $accountData = $accountResponse->json();
+    
+                if ($accountData['data'][0]['status'] == 'error') {
+                    throw new \Exception(json_encode($accountData));
+                }
+                
+                $accountId = $accountData['data'][0]['details']['id'];
+    
+                // Создание сделки
+                $dealResponse = Http::withHeaders([
+                    'Authorization' => 'Zoho-oauthtoken ' . $accessToken
+                ])->post('https://www.zohoapis.eu/crm/v2/Deals', [
+                    'data' => [
+                        [
+                            'Deal_Name' => $request->input('dealName'),
+                            'Stage' => $request->input('dealStage'),
+                            'Account_Name' => ['id' => $accountId]
+                        ]
+                    ]
+                ]);
+    
+                if ($dealResponse->failed()) {
+                    throw new \Exception($dealResponse->body());
+                }    
+            }
+            
             return response()->json(['message' => 'Deal and Account created successfully']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error creating deal or account', 'details' => $e->getMessage()], 400);
