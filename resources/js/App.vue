@@ -46,6 +46,10 @@ export default {
   methods: {
     async submitForm() {
   try {
+    // Очистить сообщения перед отправкой формы
+    this.successMessage = '';
+    this.errorMessage = '';
+
     const response = await axios.post('/create-deal-and-account', {
       dealName: this.dealName,
       dealStage: this.dealStage,
@@ -53,20 +57,19 @@ export default {
       accountWebsite: this.accountWebsite,
       accountPhone: this.accountPhone
     });
+    
     this.successMessage = 'Deal and Account created successfully';
-    this.errorMessage = '';
   } catch (error) {
-    console.log("Ответ сервера:", error.response);
+    console.log(error);
     if (error.response) {
       console.log(error.response);
-      const responseData = error.response.data;
+      const responseData = error.response.data.error;
       
-      if (responseData.details) {
-        const parsedData = JSON.parse(responseData.details);
+      if (responseData) {
+        this.errorMessage = responseData;
         if (parsedData.data && parsedData.data[0].details.api_name === 'Website' && parsedData.data[0].details.expected_data_type === 'website') {
-        this.errorMessage = 'Invalid website name provided';
+          // Логика для обработки ошибок, если нужно
         } else {
-
           const details = responseData.details.replace(/"/g, '');
           this.errorMessage = `${details}`;
         }
@@ -76,13 +79,11 @@ export default {
           this.errorMessage = 'Wrong phone number format';
         }
       }
-
-
-      
     } else {
       this.errorMessage = `Failed to create deal and account: ${error.message}`;
     }
-    
+
+    // Очистить сообщение об успехе при ошибке
     this.successMessage = '';
   }
 }
